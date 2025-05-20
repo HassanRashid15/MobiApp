@@ -18,7 +18,8 @@ export const options = {
 };
 
 function validateEmail(email: string) {
-  return /\S+@\S+\.\S+/.test(email);
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email);
 }
 
 export default function LoginPage() {
@@ -67,7 +68,10 @@ export default function LoginPage() {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => router.push("/(tabs)")}
+      >
         <Text style={styles.backButtonText}>{"< Back"}</Text>
       </TouchableOpacity>
       <Text style={styles.title}>Login</Text>
