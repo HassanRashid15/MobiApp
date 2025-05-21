@@ -28,11 +28,25 @@ interface TeamMember {
   avatar?: string;
 }
 
+interface Comment {
+  id: string;
+  text: string;
+  timestamp: string;
+  author: string;
+}
+
+interface TodoItem {
+  id: string;
+  text: string;
+  completed: boolean;
+  comments: Comment[];
+}
+
 interface Task {
   id: string;
   room: string;
   description?: string;
-  todoList?: { id: string; text: string; completed: boolean }[];
+  todoList?: TodoItem[];
   status: "in progress" | "pending" | "done" | "in review";
   assignedTo: TeamMember[];
   priority: "low" | "medium" | "high";
@@ -44,7 +58,7 @@ export default function BuildingTodoScreen() {
   const [newTask, setNewTask] = useState({
     room: "",
     description: "",
-    todoList: [] as { id: string; text: string; completed: boolean }[],
+    todoList: [] as TodoItem[],
     assignedTo: [] as TeamMember[],
     priority: "medium" as "low" | "medium" | "high",
     status: "pending" as "in progress" | "pending" | "done" | "in review",
@@ -60,6 +74,11 @@ export default function BuildingTodoScreen() {
   const [showTodoInput, setShowTodoInput] = useState(false);
   const [showDescriptionInput, setShowDescriptionInput] = useState(false);
   const [newTodoItem, setNewTodoItem] = useState("");
+  const [showCommentInput, setShowCommentInput] = useState(false);
+  const [newComment, setNewComment] = useState("");
+  const [selectedTodoItem, setSelectedTodoItem] = useState<TodoItem | null>(
+    null
+  );
 
   const rooms = [
     "Living Room",
@@ -345,6 +364,7 @@ export default function BuildingTodoScreen() {
                               id: Date.now().toString(),
                               text: newTodoItem.trim(),
                               completed: false,
+                              comments: [],
                             },
                           ],
                         });
@@ -819,46 +839,45 @@ export default function BuildingTodoScreen() {
                           </ThemedText>
                           <View style={styles.modalTodoList}>
                             {selectedTask.todoList.map((item) => (
-                              <TouchableOpacity
-                                key={item.id}
-                                style={styles.modalTodoItem}
-                                onPress={() => {
-                                  setTasks(
-                                    tasks.map((task) =>
-                                      task.id === selectedTask.id
-                                        ? {
-                                            ...task,
-                                            todoList: task.todoList?.map(
-                                              (todo) =>
-                                                todo.id === item.id
-                                                  ? {
-                                                      ...todo,
-                                                      completed:
-                                                        !todo.completed,
-                                                    }
-                                                  : todo
-                                            ),
-                                          }
-                                        : task
-                                    )
-                                  );
-                                  if (selectedTask.todoList) {
-                                    setSelectedTask({
-                                      ...selectedTask,
-                                      todoList: selectedTask.todoList.map(
-                                        (todo) =>
-                                          todo.id === item.id
-                                            ? {
-                                                ...todo,
-                                                completed: !todo.completed,
-                                              }
-                                            : todo
-                                      ),
-                                    });
-                                  }
-                                }}
-                              >
-                                <View style={styles.modalTodoItemLeft}>
+                              <View key={item.id} style={styles.modalTodoItem}>
+                                <TouchableOpacity
+                                  style={styles.modalTodoItemLeft}
+                                  onPress={() => {
+                                    setTasks(
+                                      tasks.map((task) =>
+                                        task.id === selectedTask.id
+                                          ? {
+                                              ...task,
+                                              todoList: task.todoList?.map(
+                                                (todo: TodoItem) =>
+                                                  todo.id === item.id
+                                                    ? {
+                                                        ...todo,
+                                                        completed:
+                                                          !todo.completed,
+                                                      }
+                                                    : todo
+                                              ),
+                                            }
+                                          : task
+                                      )
+                                    );
+                                    if (selectedTask.todoList) {
+                                      setSelectedTask({
+                                        ...selectedTask,
+                                        todoList: selectedTask.todoList.map(
+                                          (todo: TodoItem) =>
+                                            todo.id === item.id
+                                              ? {
+                                                  ...todo,
+                                                  completed: !todo.completed,
+                                                }
+                                              : todo
+                                        ),
+                                      });
+                                    }
+                                  }}
+                                >
                                   <FontAwesome
                                     name={
                                       item.completed
@@ -879,8 +898,31 @@ export default function BuildingTodoScreen() {
                                   >
                                     {item.text}
                                   </ThemedText>
-                                </View>
-                              </TouchableOpacity>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  style={styles.commentButton}
+                                  onPress={() => {
+                                    setSelectedTodoItem(item);
+                                    setShowCommentInput(true);
+                                  }}
+                                >
+                                  <FontAwesome
+                                    name="comment-o"
+                                    size={20}
+                                    color="#007AFF"
+                                  />
+                                  {item.comments &&
+                                    item.comments.length > 0 && (
+                                      <View style={styles.commentBadge}>
+                                        <ThemedText
+                                          style={styles.commentBadgeText}
+                                        >
+                                          {item.comments.length}
+                                        </ThemedText>
+                                      </View>
+                                    )}
+                                </TouchableOpacity>
+                              </View>
                             ))}
                           </View>
                         </View>
@@ -920,6 +962,156 @@ export default function BuildingTodoScreen() {
             >
               <ThemedText style={styles.modalDoneButtonText}>Close</ThemedText>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Comment Modal */}
+      <Modal
+        visible={showCommentInput}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          setShowCommentInput(false);
+          setSelectedTodoItem(null);
+        }}
+      >
+        <View style={styles.commentModalOverlay}>
+          <View style={styles.commentModalContent}>
+            <View style={styles.modalHeader}>
+              <ThemedText style={styles.modalTitle}>Comments</ThemedText>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => {
+                  setShowCommentInput(false);
+                  setSelectedTodoItem(null);
+                }}
+              >
+                <FontAwesome name="times" size={20} color="#8E8E93" />
+              </TouchableOpacity>
+            </View>
+
+            {selectedTodoItem && (
+              <View style={styles.commentSection}>
+                <View style={styles.selectedTodoHeader}>
+                  <FontAwesome
+                    name={
+                      selectedTodoItem.completed ? "check-circle" : "circle-o"
+                    }
+                    size={20}
+                    color={selectedTodoItem.completed ? "#34C759" : "#C7C7CC"}
+                  />
+                  <ThemedText style={styles.selectedTodoText}>
+                    {selectedTodoItem.text}
+                  </ThemedText>
+                </View>
+
+                <ScrollView style={styles.commentList}>
+                  {selectedTodoItem.comments &&
+                    selectedTodoItem.comments.map((comment) => (
+                      <View key={comment.id} style={styles.commentItem}>
+                        <View style={styles.commentHeader}>
+                          <ThemedText style={styles.commentAuthor}>
+                            {comment.author}
+                          </ThemedText>
+                          <ThemedText style={styles.commentTime}>
+                            {comment.timestamp}
+                          </ThemedText>
+                        </View>
+                        <ThemedText style={styles.commentText}>
+                          {comment.text}
+                        </ThemedText>
+                      </View>
+                    ))}
+                </ScrollView>
+
+                <View style={styles.commentInputContainer}>
+                  <TextInput
+                    style={styles.commentInput}
+                    placeholder="Add a comment..."
+                    value={newComment}
+                    onChangeText={setNewComment}
+                    placeholderTextColor="#A1A1A6"
+                    multiline
+                  />
+                  <TouchableOpacity
+                    style={[
+                      styles.sendButton,
+                      !newComment.trim() && styles.sendButtonDisabled,
+                    ]}
+                    disabled={!newComment.trim()}
+                    onPress={() => {
+                      if (
+                        newComment.trim() &&
+                        selectedTask &&
+                        selectedTodoItem
+                      ) {
+                        const newCommentObj = {
+                          id: Date.now().toString(),
+                          text: newComment.trim(),
+                          timestamp: new Date().toLocaleString(),
+                          author: "You",
+                        };
+
+                        // Update tasks state
+                        setTasks(
+                          tasks.map((task) =>
+                            task.id === selectedTask.id
+                              ? {
+                                  ...task,
+                                  todoList: task.todoList?.map(
+                                    (todo: TodoItem) =>
+                                      todo.id === selectedTodoItem.id
+                                        ? {
+                                            ...todo,
+                                            comments: [
+                                              ...(todo.comments || []),
+                                              newCommentObj,
+                                            ],
+                                          }
+                                        : todo
+                                  ),
+                                }
+                              : task
+                          )
+                        );
+
+                        // Update selectedTask state
+                        setSelectedTask({
+                          ...selectedTask,
+                          todoList: selectedTask.todoList?.map(
+                            (todo: TodoItem) =>
+                              todo.id === selectedTodoItem.id
+                                ? {
+                                    ...todo,
+                                    comments: [...todo.comments, newCommentObj],
+                                  }
+                                : todo
+                          ),
+                        });
+
+                        // Update selectedTodoItem state
+                        setSelectedTodoItem({
+                          ...selectedTodoItem,
+                          comments: [
+                            ...selectedTodoItem.comments,
+                            newCommentObj,
+                          ],
+                        });
+
+                        setNewComment("");
+                      }
+                    }}
+                  >
+                    <FontAwesome
+                      name="send"
+                      size={20}
+                      color={newComment.trim() ? "#FFFFFF" : "#A1A1A6"}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
           </View>
         </View>
       </Modal>
@@ -1514,6 +1706,98 @@ const styles = StyleSheet.create({
   modalTodoTextCompleted: {
     textDecorationLine: "line-through",
     color: "#8E8E93",
+  },
+  commentButton: {
+    padding: 4,
+  },
+  commentBadge: {
+    padding: 4,
+    backgroundColor: "#007AFF",
+    borderRadius: 10,
+    marginLeft: 8,
+  },
+  commentBadgeText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#FFFFFF",
+  },
+  commentSection: {
+    padding: 20,
+  },
+  selectedTodoHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  selectedTodoText: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: "#000000",
+  },
+  commentList: {
+    marginTop: 12,
+  },
+  commentItem: {
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F2F2F7",
+  },
+  commentHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  commentAuthor: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#8E8E93",
+  },
+  commentTime: {
+    fontSize: 12,
+    color: "#8E8E93",
+  },
+  commentText: {
+    fontSize: 15,
+    color: "#000000",
+    marginTop: 4,
+  },
+  commentInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#F2F2F7",
+  },
+  commentInput: {
+    flex: 1,
+    backgroundColor: "#F2F2F7",
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 15,
+    color: "#000000",
+  },
+  sendButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: "#007AFF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  sendButtonDisabled: {
+    backgroundColor: "#A1A1A6",
+  },
+  commentModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  commentModalContent: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: "80%",
   },
 });
 
