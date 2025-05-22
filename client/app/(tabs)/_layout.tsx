@@ -1,8 +1,33 @@
 import { Tabs } from "expo-router";
 import { FontAwesome } from "@expo/vector-icons";
 import { Platform } from "react-native";
+import { useAuth } from "../../hooks/useAuth";
+import { useEffect, useState } from "react";
+import { supabase } from "../../lib/supabase";
 
 export default function TabLayout() {
+  const { user } = useAuth();
+  const [role, setRole] = useState<string | null>(null);
+  const [isActive, setIsActive] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) {
+        setRole(null);
+        setIsActive(true);
+        return;
+      }
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role, is_active")
+        .eq("id", user.id)
+        .single();
+      setRole(data?.role || null);
+      setIsActive(data?.is_active ?? true);
+    };
+    fetchProfile();
+  }, [user]);
+
   return (
     <Tabs
       screenOptions={{
@@ -36,6 +61,36 @@ export default function TabLayout() {
           ),
         }}
       />
+      {role && role.toLowerCase() === "admin" && (
+        <Tabs.Screen
+          name="admin-dashboard"
+          options={{
+            title: "Admin",
+            tabBarIcon: ({ color }) => (
+              <FontAwesome
+                name="dashboard"
+                size={Platform.OS === "ios" ? 24 : 22}
+                color={color}
+              />
+            ),
+          }}
+        />
+      )}
+      {isActive && (
+        <Tabs.Screen
+          name="explore"
+          options={{
+            title: "Explore",
+            tabBarIcon: ({ color }) => (
+              <FontAwesome
+                name="search"
+                size={Platform.OS === "ios" ? 24 : 22}
+                color={color}
+              />
+            ),
+          }}
+        />
+      )}
       <Tabs.Screen
         name="profile"
         options={{

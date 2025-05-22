@@ -5,11 +5,46 @@ import {
   ScrollView,
   Platform,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import ScreenWrapper from "../../components/ScreenWrapper";
 import { FontAwesome } from "@expo/vector-icons";
+import { useAuth } from "../../hooks/useAuth";
 
 export default function HomeScreen() {
+  const { user, loading } = useAuth();
+  const role = user?.user_metadata?.role;
+
+  if (loading) {
+    return (
+      <View style={styles.centeredContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
+    );
+  }
+
+  if (!user) {
+    return (
+      <View style={styles.centeredContainer}>
+        <Text style={styles.welcomeTitle}>Welcome</Text>
+        <Text style={styles.welcomeMessage}>
+          Please log in to view your dashboard.
+        </Text>
+      </View>
+    );
+  }
+
+  if (!role) {
+    return (
+      <View style={styles.centeredContainer}>
+        <Text style={styles.welcomeTitle}>Welcome</Text>
+        <Text style={styles.welcomeMessage}>
+          No role assigned. Please contact support.
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <ScreenWrapper backgroundColor="#007AFF" statusBarStyle="light-content">
       <ScrollView
@@ -18,7 +53,10 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Welcome Back!</Text>
+          <View style={styles.welcomeContainer}>
+            <Text style={styles.welcomeTitle}>Welcome</Text>
+            <Text style={styles.roleText}>{role}</Text>
+          </View>
           <TouchableOpacity style={styles.notificationButton}>
             <FontAwesome
               name="bell"
@@ -27,16 +65,31 @@ export default function HomeScreen() {
             />
           </TouchableOpacity>
         </View>
-        <View style={styles.content}>
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
-          {/* Add your content here */}
-        </View>
       </ScrollView>
     </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
+  centeredContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    padding: 20,
+  },
+  welcomeTitle: {
+    fontSize: 32,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  welcomeMessage: {
+    fontSize: 18,
+    color: "#666",
+    textAlign: "center",
+  },
   scrollView: {
     flex: 1,
   },
@@ -44,40 +97,20 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   header: {
-    padding: Platform.OS === "ios" ? 20 : 16,
-    paddingTop: Platform.OS === "ios" ? 20 : 16,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    padding: 20,
   },
-  title: {
-    fontSize: Platform.OS === "ios" ? 28 : 24,
-    fontWeight: "bold",
+  welcomeContainer: {
+    flex: 1,
+  },
+  roleText: {
+    fontSize: 24,
     color: "#fff",
+    fontWeight: "600",
   },
   notificationButton: {
-    width: Platform.OS === "ios" ? 44 : 40,
-    height: Platform.OS === "ios" ? 44 : 40,
-    borderRadius: Platform.OS === "ios" ? 22 : 20,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  content: {
-    padding: Platform.OS === "ios" ? 20 : 16,
-    backgroundColor: "#fff",
-    borderTopLeftRadius: Platform.OS === "ios" ? 20 : 16,
-    borderTopRightRadius: Platform.OS === "ios" ? 20 : 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  sectionTitle: {
-    fontSize: Platform.OS === "ios" ? 20 : 18,
-    fontWeight: "600",
-    marginBottom: Platform.OS === "ios" ? 15 : 12,
-    color: "#333",
+    padding: 10,
   },
 });
