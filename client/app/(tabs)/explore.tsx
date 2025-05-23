@@ -1,3 +1,4 @@
+import React from "react";
 import {
   StyleSheet,
   View,
@@ -5,82 +6,52 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, Stack } from "expo-router";
 import { useAuth } from "../../hooks/useAuth";
+import Admin from "../../components/Admin";
+import Manager from "../../components/Manager";
+import Operator from "../../components/Operator";
+import Tenants from "../../components/Tenants";
 
 export default function ExploreScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const role = user?.user_metadata?.role?.toLowerCase();
 
-  const navigateTo = (screen: string) => {
-    router.push(screen as any);
-  };
-
-  if (!user) {
-    return (
-      <View style={styles.centeredContainer}>
-        <Text style={styles.loginMessage}>
-          Login to explore role-specific items
-        </Text>
-        <TouchableOpacity
-          style={styles.loginButton}
-          onPress={() => router.push("/login")}
-        >
-          <Text style={styles.loginButtonText}>Login</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Explore</Text>
-
-        {role === "admin" && (
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => navigateTo("Admin")}
-          >
-            <Text style={styles.buttonText}>Go to Admin</Text>
-          </TouchableOpacity>
-        )}
-
-        {role === "manager" && (
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => navigateTo("Manager")}
-          >
-            <Text style={styles.buttonText}>Go to Manager</Text>
-          </TouchableOpacity>
-        )}
-
-        {role === "operator" && (
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => navigateTo("Operator")}
-          >
-            <Text style={styles.buttonText}>Go to Operator</Text>
-          </TouchableOpacity>
-        )}
-
-        {role === "tenant" && (
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => navigateTo("Tenants")}
-          >
-            <Text style={styles.buttonText}>Go to Tenants</Text>
-          </TouchableOpacity>
-        )}
-
-        {!role && (
-          <Text style={styles.noRoleText}>
-            No role assigned. Please contact support.
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      {!user ? (
+        <View style={styles.centeredContainer}>
+          <Text style={styles.loginMessage}>
+            Login to explore role-specific items
           </Text>
-        )}
-      </View>
-    </ScrollView>
+          <TouchableOpacity
+            style={styles.loginButton}
+            onPress={() => router.push("/login")}
+          >
+            <Text style={styles.loginButtonText}>Login</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <ScrollView style={styles.container}>
+          <View style={styles.content}>
+            <Text style={styles.title}>Explore</Text>
+
+            {role === "admin" && <Admin />}
+            {role === "manager" && <Manager />}
+            {role === "operator" && <Operator />}
+            {role === "tenant" && <Tenants />}
+
+            {!role && (
+              <Text style={styles.noRoleText}>
+                No role assigned. Please contact support.
+              </Text>
+            )}
+          </View>
+        </ScrollView>
+      )}
+    </>
   );
 }
 
@@ -140,5 +111,34 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
+  },
+  adminSection: {
+    marginBottom: 20,
+  },
+  section: {
+    marginBottom: 15,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#444",
+    marginBottom: 15,
+  },
+  card: {
+    backgroundColor: "#f8f9fa",
+    padding: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e9ecef",
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 8,
+  },
+  cardDescription: {
+    fontSize: 14,
+    color: "#666",
   },
 });
